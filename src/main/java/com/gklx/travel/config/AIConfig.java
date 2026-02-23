@@ -16,8 +16,8 @@ public class AIConfig {
     public DifyClient difyClient() {
 
         DifyConfig config = DifyConfig.builder()
-                .baseUrl("https://api.deepseek.com/")
-                .apiKey("your-api-key")
+                .baseUrl("http://localhost/v1")
+                .apiKey("app-nyDWpAfsQ4waWgHRoOFxu4I9")
                 .connectTimeout(5000)
                 .readTimeout(60000)
                 .writeTimeout(30000)

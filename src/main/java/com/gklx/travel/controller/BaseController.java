@@ -1,12 +1,16 @@
 package com.gklx.travel.controller;
 
+import cn.hutool.core.map.MapUtil;
 import com.gklx.travel.service.AgentService;
 import com.gklx.travel.util.FTUtil;
 import com.openai.client.OpenAIClient;
 import com.openai.core.http.StreamResponse;
-import com.openai.models.chat.completions.ChatCompletionChunk;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import io.github.imfangs.dify.client.DifyClient;
+import io.github.imfangs.dify.client.callback.ChatStreamCallback;
+import io.github.imfangs.dify.client.enums.ResponseMode;
+import io.github.imfangs.dify.client.event.*;
+import io.github.imfangs.dify.client.model.chat.ChatMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,8 +47,42 @@ public class BaseController {
         user.put("hobbies", new String[]{"看书", "跑步", "编程"});
         dataModel.put("user", user);
 
-        // 生成字符串
         String result = ftUtil.get("demo.ftl", dataModel);
+        ChatMessage message = ChatMessage.builder()
+                .query("请给我讲一个简短的故事")
+                .user("user-123")
+                .inputs(MapUtil.<String,Object>builder().build())
+                .responseMode(ResponseMode.STREAMING)
+                .build();
+
+        difyClient.sendChatMessageStream(message, new ChatStreamCallback() {
+            @Override
+            public void onMessage(MessageEvent event) {
+                System.out.println("收到消息片段: " + event.getAnswer());
+            }
+
+            @Override
+            public void onAgentMessage(AgentMessageEvent event) {
+                System.out.println("收到消息片段: " + event.getAnswer());
+            }
+
+            @Override
+            public void onMessageEnd(MessageEndEvent event) {
+                System.out.println("消息结束，完整消息ID: " + event.getMessageId());
+            }
+
+            @Override
+            public void onError(ErrorEvent event) {
+                System.err.println("错误: " + event.getMessage());
+            }
+
+
+
+            @Override
+            public void onException(Throwable throwable) {
+                System.err.println("异常: " + throwable.getMessage());
+            }
+        });
         return result;
     }
 
@@ -74,15 +112,6 @@ public class BaseController {
                 .doOnComplete(() -> System.out.println("流式输出完成")) // 完成回调
                 .onErrorReturn("推送异常: 数据发送失败"); // 异常兜底
 
-        // 2. 如果需要先执行前置逻辑（如初始化），再返回流式数据，可以用 concatWith
-        // return Mono.fromRunnable(() -> {
-        //     // 前置同步/异步逻辑（如参数校验、资源初始化）
-        //     System.out.println("开始执行流式任务...");
-        // }).thenMany(
-        //     Flux.interval(Duration.ofSeconds(1))
-        //         .take(10)
-        //         .map(count -> "流式输出内容: " + (count + 1))
-        // );
     }
 
 }
