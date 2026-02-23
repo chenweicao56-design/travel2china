@@ -3,10 +3,10 @@ package com.gklx.travel.config;
 import io.github.imfangs.dify.client.DifyClient;
 import io.github.imfangs.dify.client.DifyClientFactory;
 import io.github.imfangs.dify.client.model.DifyConfig;
-import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-@Configurable
+@Configuration
 public class DFConfig {
 
 
