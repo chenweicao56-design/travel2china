@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: travel2china
+  freemarker:
+    suffix: .ftl
+    charset: UTF-8
+    template-loader-path: classpath:/templates/
+    cache: false
+    content-type: text/html
