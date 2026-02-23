@@ -2,6 +2,10 @@ package com.gklx.travel.controller;
 
 import com.gklx.travel.service.AgentService;
 import com.gklx.travel.util.FTUtil;
+import com.openai.client.OpenAIClient;
+import com.openai.core.http.StreamResponse;
+import com.openai.models.chat.completions.ChatCompletionChunk;
+import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import io.github.imfangs.dify.client.DifyClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -25,6 +29,8 @@ public class BaseController {
 
     @Autowired
     private AgentService agentService;
+    @Autowired
+    private OpenAIClient openAIClient;
 
 
     @GetMapping
@@ -40,6 +46,22 @@ public class BaseController {
         // 生成字符串
         String result = ftUtil.get("demo.ftl", dataModel);
         return result;
+    }
+
+    @GetMapping(value = "/openAi", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> openAi() throws Exception {
+        ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
+                .addUserMessage("你是谁")
+                .model("deepseek-chat")
+                .build();
+        return Flux.using(
+                () -> openAIClient.chat().completions().createStreaming(params),
+                stream -> Flux.fromStream(stream.stream())
+                        .flatMap(chunk -> Flux.fromIterable(chunk.choices()))
+                        .map(choice -> choice.delta().content().orElse(""))
+                        .doOnNext(System.out::println),
+                StreamResponse::close
+        );
     }
 
     @PostMapping(value = "/run", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
